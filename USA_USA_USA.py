@@ -137,7 +137,7 @@ for currCounty in range(dimensions[0]):
     newState = False
     if previousState != states[currCounty]:
         newState = True
-    if (newState or currCounty == dimensions[1]-1) and makeFigsFlag:
+    if newState or currCounty == dimensions[0]-1:
         currState += 1
         stateOrder.append(previousState)
         if stateBeginIndex != (currCounty-1):  # This means we aren't DC
@@ -239,56 +239,57 @@ for currCounty in range(dimensions[0]):
         RTcases = RTliveValues.iloc[casesInds[0]]
         RTcases20 = RTliveValues20.iloc[casesInds[0]]
         RTcases80 = RTliveValues80.iloc[casesInds[0]]
-
-
-        # Create the figure with 4 subplots
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2,figsize=(16,9))
-        fig.suptitle('COVID-19 Stats for the Great State of ' + previousState, size=30)
-
-
-        ax1.plot(np.arange(currDay+1)+offsetDays, casesPerDayStatewide[currState,:], color='black', lineWidth=1, label=f'New Confirmed Cases: {int(casesPerMilStatewide)} per million cumulatively')  # 'Color', [0.9290 0.6940 0.1250]);
-        ax1.plot(np.arange(currDay+1)+offsetDays, cases7dayStatewide[currState,:], color='cyan', lineWidth=4, label='7 Day Case Average')  # 'LineWidth', 4, 'Color', [0.9290 0.6940 0.1250]);
-        ax1.plot(dayNumber, estimatedCases, lineWidth=4, color='blue', label=f'Estimated 7 Day Avg: {float(estimatedPercentInfected[currState])}% of population have had COVID-19')  # 'LineWidth', 4, 'Color', [0.4940 0.1840 0.5560]);
-        ax1.set_xlabel('Days Since 2020 Began', fontsize=14)
-        ax1.set_ylabel('New COVID-19 Cases', fontsize=14)
-        legend = ax1.legend(loc='upper left', fontsize='small')
-
-
-        infectedNow = float(estimatedCurrentlyInfected[-1])
-        ax2.set_xlabel('Days Since 2020 Began', fontsize=14)
-        ax2.set_ylabel('Estimated % Infected at the Time', color='blue', fontsize=14)
-        ax2.plot(dayNumber, estimatedCurrentlyInfected, lineWidth=4, color='blue', label=f'% of Population Infected: Currently {round(infectedNow,2)}%')
-        ax2.tick_params(axis='y', labelcolor='blue')
-        Ax2 = ax2.twinx()
-        Ax2.set_ylabel('# of Deaths', color='red', fontsize=14)
-        Ax2.plot(np.arange(currDay+1)+offsetDays, deathsStatewideCumul[currState,:], lineWidth=4, color='red', label=f'Cumulative Deaths: {deathPerMilStatewide} per million so far')
-        Ax2.tick_params(axis='y', labelcolor='red')
-        ax2.legend(loc=(0.01,0.9), fontsize='small')
-        Ax2.legend(loc=(0.01,0.8), fontsize='small')
-
-
         RTcasesDays = np.arange(int(dayNumber[-1]-len(RTcases)+1), int(dayNumber[-1]+1))
         RTcasesNow = round(float(RTcases.iloc[-1]), 2)
-        ax3.set_xlabel('Days Since 2020 Began', fontsize=14)
-        ax3.set_ylabel('Effective Reproduction Number (R_t)', fontsize=14)
-        ax3.plot(RTcasesDays, RTcases, lineWidth=4, color='cyan', label=f'R_t Estimate from Cases with 60% Confidence Range: Currently {RTcasesNow}')
-        ax3.fill_between(RTcasesDays, RTcases20, RTcases80, color='cyan', alpha=0.2)
-        legend = ax3.legend(loc='upper left', fontsize='small')
-    
 
-        theCDF = 100 * (1 - binom.cdf(0, range(1,1001), infectedNow/100))
-        firstOver90 = np.where(theCDF > 90)[0]
-        ax4.set_xlabel(f'# of People Interacted With (Assumes {round(infectedNow,2)} % Infected)')
-        ax4.set_ylabel('% Chance You Interacted With Infected Person')
-        if len(firstOver90) != 0:  # Want to plot up to 90% chance
-            ax4.plot(range(1,firstOver90[0]+2), theCDF[0:firstOver90[0]+1], lineWidth=4)
-        else:
-            ax4.plot(range(1,1001), theCDF, lineWidth=4)
 
+        if makeFigsFlag:
+            # Create the figure with 4 subplots
+            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2,figsize=(16,9))
+            fig.suptitle('COVID-19 Stats for the Great State of ' + previousState, size=30)
     
-        # Save jpgs
-        fig.savefig('jpgs\\'+ previousState + '\\(STATEWIDE).jpg')
-        plt.close(fig)
+    
+            ax1.plot(np.arange(currDay+1)+offsetDays, casesPerDayStatewide[currState,:], color='black', lineWidth=1, label=f'New Confirmed Cases: {int(casesPerMilStatewide)} per million cumulatively')  # 'Color', [0.9290 0.6940 0.1250]);
+            ax1.plot(np.arange(currDay+1)+offsetDays, cases7dayStatewide[currState,:], color='cyan', lineWidth=4, label='7 Day Case Average')  # 'LineWidth', 4, 'Color', [0.9290 0.6940 0.1250]);
+            ax1.plot(dayNumber, estimatedCases, lineWidth=4, color='blue', label=f'Estimated 7 Day Avg: {float(estimatedPercentInfected[currState])}% of population have had COVID-19')  # 'LineWidth', 4, 'Color', [0.4940 0.1840 0.5560]);
+            ax1.set_xlabel('Days Since 2020 Began', fontsize=14)
+            ax1.set_ylabel('New COVID-19 Cases', fontsize=14)
+            legend = ax1.legend(loc='upper left', fontsize='small')
+    
+    
+            infectedNow = float(estimatedCurrentlyInfected[-1])
+            ax2.set_xlabel('Days Since 2020 Began', fontsize=14)
+            ax2.set_ylabel('Estimated % Infected at the Time', color='blue', fontsize=14)
+            ax2.plot(dayNumber, estimatedCurrentlyInfected, lineWidth=4, color='blue', label=f'% of Population Infected: Currently {round(infectedNow,2)}%')
+            ax2.tick_params(axis='y', labelcolor='blue')
+            Ax2 = ax2.twinx()
+            Ax2.set_ylabel('# of Deaths', color='red', fontsize=14)
+            Ax2.plot(np.arange(currDay+1)+offsetDays, deathsStatewideCumul[currState,:], lineWidth=4, color='red', label=f'Cumulative Deaths: {deathPerMilStatewide} per million so far')
+            Ax2.tick_params(axis='y', labelcolor='red')
+            ax2.legend(loc=(0.01,0.9), fontsize='small')
+            Ax2.legend(loc=(0.01,0.8), fontsize='small')
+    
+    
+            ax3.set_xlabel('Days Since 2020 Began', fontsize=14)
+            ax3.set_ylabel('Effective Reproduction Number (R_t)', fontsize=14)
+            ax3.plot(RTcasesDays, RTcases, lineWidth=4, color='cyan', label=f'R_t Estimate from Cases with 60% Confidence Range: Currently {RTcasesNow}')
+            ax3.fill_between(RTcasesDays, RTcases20, RTcases80, color='cyan', alpha=0.2)
+            legend = ax3.legend(loc='upper left', fontsize='small')
+        
+    
+            theCDF = 100 * (1 - binom.cdf(0, range(1,1001), infectedNow/100))
+            firstOver90 = np.where(theCDF > 90)[0]
+            ax4.set_xlabel(f'# of People Interacted With (Assumes {round(infectedNow,2)} % Infected)')
+            ax4.set_ylabel('% Chance You Interacted With Infected Person')
+            if len(firstOver90) != 0:  # Want to plot up to 90% chance
+                ax4.plot(range(1,firstOver90[0]+2), theCDF[0:firstOver90[0]+1], lineWidth=4)
+            else:
+                ax4.plot(range(1,1001), theCDF, lineWidth=4)
+            # Save jpgs
+            fig.savefig('jpgs\\'+ previousState + '\\(STATEWIDE).jpg')
+            plt.close(fig)
+
+            
         # Update beginning index for the new state
         stateBeginIndex = currCounty
         previousState = states[currCounty]
