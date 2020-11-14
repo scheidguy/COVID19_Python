@@ -241,6 +241,36 @@ for currCounty in range(dimensions[0]):
         RTcases80 = RTliveValues80.iloc[casesInds[0]]
         RTcasesDays = np.arange(int(dayNumber[-1]-len(RTcases)+1), int(dayNumber[-1]+1))
         RTcasesNow = round(float(RTcases.iloc[-1]), 2)
+        # Grab data from May 2020 onwards (once testing ramped up) 
+        RTMayInd = np.where(RTcasesDays > sum(daysPerMonth[0:4]))[0][0]
+        laterRT = np.array(RTcases[RTMayInd:])
+        laterEstimated = estimatedCurrentlyInfected[MayInd:]
+        laterPositivity = positivityRate7day[MayInd:]
+        laterConfirmedCases = casesPerDayStatewide[currState, 121-offsetDays:]
+        # Make sure data ends on same day since drawing from multiple sources
+        if len(laterRT) > len(laterEstimated):
+            laterRT = np.delete(laterRT, -1)
+        elif len(laterEstimated) > len(laterRT):
+            laterEstimated = np.delete(laterEstimated, -1)
+            laterPositivity = np.delete(laterPositivity, -1)
+            laterConfirmedCases = np.delete(laterConfirmedCases, -1)
+        # Remove most recent week since that is what we are using as "truth"
+        for noUse in range(7):
+            laterRT = np.delete(laterRT, -1)
+            laterEstimated = np.delete(laterEstimated, -1)
+            laterPositivity = np.delete(laterPositivity, -1)
+        # Calculate # of confirmed cases in following week
+        numCasesNextWeek = np.array([])
+        for day in range(len(laterRT)):
+            numCasesNextWeek = np.append(numCasesNextWeek, sum(laterConfirmedCases[day+1:day+8]))
+        state = currState * np.ones((len(numCasesNextWeek), 1))
+        pop = statePop * np.ones((len(numCasesNextWeek), 1))
+        days = np.arange(122, 122+len(numCasesNextWeek))
+        if currState == 0:
+            features = np.column_stack((state, pop, days, numCasesNextWeek, laterRT, laterPositivity, laterEstimated))
+        else:
+            stateFeats = np.column_stack((state, pop, days, numCasesNextWeek, laterRT, laterPositivity, laterEstimated))
+            features = np.concatenate((features, stateFeats))
 
 
         if makeFigsFlag:
@@ -303,8 +333,8 @@ for currCounty in range(dimensions[0]):
         continue
     fig = plt.figure()
     plt.plot(np.arange(currDay+1)+offsetDays, casesPerDay[currCounty,:], lineWidth=1, color='black', label=f'New Confirmed Cases: {int(casesPerMil)} per million')
-    plt.plot(np.arange(currDay+1)+offsetDays, cases7day[currCounty,:], lineWidth=4, color='cyan', label=f'Cumulative Deaths: {deathPerMil} per million')
-    plt.plot(np.arange(currDay+1)+offsetDays, deaths.iloc[currCounty,:], lineWidth=4, color='red', label='7 Day Case Average')
+    plt.plot(np.arange(currDay+1)+offsetDays, cases7day[currCounty,:], lineWidth=4, color='cyan', label='7 Day Case Average')
+    plt.plot(np.arange(currDay+1)+offsetDays, deaths.iloc[currCounty,:], lineWidth=4, color='red', label=f'Cumulative Deaths: {deathPerMil} per million')
     plt.xlabel('Days Since 2020 Began')
     plt.ylabel('New COVID-19 Cases')
     plt.title(f'COVID-19 Stats For {counties[currCounty]}, {states[currCounty]}')
